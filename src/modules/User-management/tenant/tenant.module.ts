@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { TenantRepository } from './tenant.repository.interface.js';
 import { TenantRepositoryImpl } from './tenant.repository.js';
 import { TenantService } from './tenant.service.js';
+import { TenantController } from './tenant.controller.js';
 import { UserModule } from '../user/user.module.js';
 import { RoleModule } from '../role/role.module.js';
 
 @Module({
   imports: [UserModule, RoleModule],
+  controllers: [TenantController],
   providers: [
     TenantService,
     { provide: TenantRepository, useClass: TenantRepositoryImpl },
