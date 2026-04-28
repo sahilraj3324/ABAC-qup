@@ -136,6 +136,10 @@ export class UserRepositoryImpl extends UserRepository {
     return res.rows.map((r) => r.tenant_id);
   }
 
+  async getMemberships(userId: string): Promise<string[]> {
+    return this.getUserTenants(userId);
+  }
+
   async getMfaData(userId: string): Promise<[boolean, string | null, string[] | null]> {
     const res = await this.pool.query(
       `SELECT mfa_enabled, mfa_secret, mfa_backup_codes FROM dev.qup_users WHERE id = $1`,

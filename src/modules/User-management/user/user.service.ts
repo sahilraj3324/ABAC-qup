@@ -3,6 +3,8 @@ import { UserRepository } from './user.repository.interface.js';
 import { RoleRepository } from '../role/role.repository.interface.js';
 import { UserEntity } from './user.entity.js';
 import * as bcrypt from 'bcryptjs';
+import { createHash } from 'crypto';
+
 
 const OWNER = 'OWNER';
 const ADMIN = 'ADMIN';
@@ -44,11 +46,41 @@ export class UserService {
     return { user_id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, is_active: u.is_active };
   }
 
+  // No actor check — used by controller before auth is wired
+  async createDirect(email: string, password: string, first: string, last: string, tenantId: string, roleId?: string | null) {
+    if (!email?.trim()) throw new BadRequestException('Email cannot be empty');
+    if (!password || password.length < 8) throw new BadRequestException('Password must be at least 8 characters long');
+    if (!first?.trim()) throw new BadRequestException('First name cannot be empty');
+    if (!last?.trim()) throw new BadRequestException('Last name cannot be empty');
+    const passwordHash = await bcrypt.hash(password, 10);
+    const u = await this.users.createLocal(email.trim().toLowerCase(), passwordHash, first.trim(), last.trim());
+    if (tenantId) await this.users.addMembership(u.id, tenantId);
+    if (roleId && tenantId) await this.roles.assignUserRole(u.id, roleId, tenantId);
+    return { user_id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, is_active: u.is_active };
+  }
+
   async authenticate(email: string, password: string): Promise<UserEntity | null> {
     if (!email || !password) return null;
     const ph = await this.users.getPasswordHash(email.trim().toLowerCase());
     if (!ph) return null;
-    const valid = await bcrypt.compare(password, ph);
+
+    let valid = false;
+
+    if (ph.startsWith('$2b$') || ph.startsWith('$2a$')) {
+      // New bcrypt hash
+      valid = await bcrypt.compare(password, ph);
+    } else {
+      // Legacy Python SHA256 hash: hashlib.sha256(password.encode()).hexdigest()
+      const sha256 = createHash('sha256').update(password).digest('hex');
+      valid = sha256 === ph;
+      if (valid) {
+        // Silently upgrade to bcrypt on first successful login
+        const newHash = await bcrypt.hash(password, 10);
+        const user = await this.users.getByEmail(email.trim().toLowerCase());
+        if (user) await this.users.updatePassword(user.id, newHash);
+      }
+    }
+
     if (!valid) return null;
     return this.users.getByEmail(email.trim().toLowerCase());
   }
