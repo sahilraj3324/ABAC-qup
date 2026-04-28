@@ -13,6 +13,7 @@ export abstract class UserRepository {
   abstract getPasswordHash(email: string): Promise<string | null>;
   abstract updatePassword(userId: string, newPasswordHash: string): Promise<boolean>;
   abstract getUserTenants(userId: string): Promise<string[]>;
+  abstract getMemberships(userId: string): Promise<string[]>;
   abstract getMfaData(userId: string): Promise<[boolean, string | null, string[] | null]>;
   abstract updateMfa(userId: string, enabled: boolean, secret: string | null, backupCodes: string[] | null): Promise<boolean>;
 }

@@ -3,9 +3,11 @@ import { RoleModule } from '../role/role.module.js';
 import { UserRepository } from './user.repository.interface.js';
 import { UserRepositoryImpl } from './user.repository.js';
 import { UserService } from './user.service.js';
+import { UserController } from './user.controller.js';
 
 @Module({
   imports: [RoleModule],
+  controllers: [UserController],
   providers: [
     UserService,
     { provide: UserRepository, useClass: UserRepositoryImpl },

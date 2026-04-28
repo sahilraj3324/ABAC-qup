@@ -8,6 +8,7 @@ import { UserModule } from './modules/User-management/user/user.module.js';
 import { RoleModule } from './modules/User-management/role/role.module.js';
 import { PermissionModule } from './modules/User-management/permission/permission.module.js';
 import { GroupModule } from './modules/User-management/group/group.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { GroupModule } from './modules/User-management/group/group.module.js';
     TenantModule,
     PermissionModule,
     GroupModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
