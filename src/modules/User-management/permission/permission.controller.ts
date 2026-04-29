@@ -25,6 +25,11 @@ export class PermissionController {
     return this.permissionService.effectiveCodes(userId, envId);
   }
 
+  @Get('role/:roleId')
+  async getForRole(@Param('roleId') roleId: string) {
+    return this.permissionService.getPermissionsForRole(roleId);
+  }
+
   @Get(':permissionId')
   async get(@Param('permissionId') permissionId: string) {
     return this.permissionService.get(permissionId);
