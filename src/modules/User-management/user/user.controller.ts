@@ -18,19 +18,20 @@ export class UserController {
 
   @Post()
   async create(
-    @Body() body: { user_data: { email: string; password: string; first_name: string; last_name: string; role_id?: string } },
+    @Body() body: { user_data: { email: string; password: string; first_name: string; last_name: string; role_id?: string; role_ids?: string[] } },
     @Query('tenant_id') tenantId: string,
   ) {
-    const { email, password, first_name, last_name, role_id } = body.user_data;
-    return this.userService.createDirect(email, password, first_name, last_name, tenantId, role_id);
+    const { email, password, first_name, last_name, role_id, role_ids } = body.user_data;
+    return this.userService.createDirect(email, password, first_name, last_name, tenantId, role_id, role_ids);
   }
 
   @Put(':userId')
   async update(
     @Param('userId') userId: string,
-    @Body() body: { first_name?: string; last_name?: string; is_active?: boolean },
+    @Body() body: { first_name?: string; last_name?: string; is_active?: boolean; role_ids?: string[] },
+    @Query('tenant_id') tenantId: string,
   ) {
-    return this.userService.update(userId, body.first_name, body.last_name, body.is_active);
+    return this.userService.update(userId, body.first_name, body.last_name, body.is_active, body.role_ids, tenantId);
   }
 
   @Delete(':userId')
