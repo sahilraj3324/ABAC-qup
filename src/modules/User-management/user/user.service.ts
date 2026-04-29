@@ -47,7 +47,7 @@ export class UserService {
   }
 
   // No actor check — used by controller before auth is wired
-  async createDirect(email: string, password: string, first: string, last: string, tenantId: string, roleId?: string | null) {
+  async createDirect(email: string, password: string, first: string, last: string, tenantId: string, roleId?: string | null, roleIds?: string[]) {
     if (!email?.trim()) throw new BadRequestException('Email cannot be empty');
     if (!password || password.length < 8) throw new BadRequestException('Password must be at least 8 characters long');
     if (!first?.trim()) throw new BadRequestException('First name cannot be empty');
@@ -55,7 +55,16 @@ export class UserService {
     const passwordHash = await bcrypt.hash(password, 10);
     const u = await this.users.createLocal(email.trim().toLowerCase(), passwordHash, first.trim(), last.trim());
     if (tenantId) await this.users.addMembership(u.id, tenantId);
+    
     if (roleId && tenantId) await this.roles.assignUserRole(u.id, roleId, tenantId);
+    if (roleIds && tenantId) {
+      for (const rid of roleIds) {
+        if (rid !== roleId) {
+          await this.roles.assignUserRole(u.id, rid, tenantId);
+        }
+      }
+    }
+    
     return { user_id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, is_active: u.is_active };
   }
 
@@ -157,7 +166,7 @@ export class UserService {
     };
   }
 
-  async update(userId: string, first?: string | null, last?: string | null, isActive?: boolean | null): Promise<UserEntity> {
+  async update(userId: string, first?: string | null, last?: string | null, isActive?: boolean | null, roleIds?: string[], tenantId?: string): Promise<UserEntity> {
     const existing = await this.users.get(userId);
     if (!existing) throw new NotFoundException(`User with ID ${userId} not found`);
     if (first !== undefined && first !== null && (!first.trim() || first.trim().length > 100)) {
@@ -167,6 +176,22 @@ export class UserService {
       throw new BadRequestException('Last name cannot be empty or exceed 100 characters');
     }
     const result = await this.users.update(userId, first?.trim() ?? null, last?.trim() ?? null, isActive ?? null);
+    
+    if (roleIds && tenantId) {
+      const currentRoles = await this.roles.getRolesForUser(userId, tenantId);
+      const currentRoleIds = currentRoles.map((r: any) => r.id);
+      
+      const toAdd = roleIds.filter(id => !currentRoleIds.includes(id));
+      const toRemove = currentRoleIds.filter(id => !roleIds.includes(id));
+
+      for (const r of toAdd) {
+        await this.roles.assignUserRole(userId, r, tenantId);
+      }
+      for (const r of toRemove) {
+        await this.roles.removeUserRole(userId, r, tenantId);
+      }
+    }
+
     if (!result) throw new BadRequestException(`Failed to update user ${userId}`);
     return result;
   }
