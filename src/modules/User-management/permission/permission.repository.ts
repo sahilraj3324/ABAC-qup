@@ -92,6 +92,18 @@ export class PermissionRepositoryImpl extends PermissionRepository {
     return res.rowCount! > 0;
   }
 
+  async getForRole(roleId: string): Promise<PermissionEntity[]> {
+    const res = await this.pool.query(
+      `SELECT pt.id, pt.code, pt.name, pt.description
+       FROM dev.qup_role_permissions rp
+       JOIN dev.qup_permission_types pt ON pt.id = rp.permission_id
+       WHERE rp.role_id = $1
+       ORDER BY pt.code`,
+      [roleId],
+    );
+    return res.rows.map(rowToPerm);
+  }
+
   async getEffectiveCodes(userId: string, tenantId: string): Promise<Set<string>> {
     const res = await this.pool.query(
       `SELECT DISTINCT pt.code

@@ -9,5 +9,6 @@ export abstract class PermissionRepository {
   abstract delete(permissionId: string): Promise<boolean>;
   abstract grantToRole(roleId: string, permissionId: string): Promise<void>;
   abstract revokeFromRole(roleId: string, permissionId: string): Promise<boolean>;
+  abstract getForRole(roleId: string): Promise<PermissionEntity[]>;
   abstract getEffectiveCodes(userId: string, tenantId: string): Promise<Set<string>>;
 }

@@ -56,6 +56,10 @@ export class PermissionService {
     await this.perms.revokeFromRole(roleId, permissionId);
   }
 
+  async getPermissionsForRole(roleId: string): Promise<PermissionEntity[]> {
+    return this.perms.getForRole(roleId);
+  }
+
   async effectiveCodes(userId: string, tenantId: string): Promise<{ user_id: string; tenant_id: string; permissions: string[]; total: number }> {
     const codes = await this.perms.getEffectiveCodes(userId, tenantId);
     const list = [...codes];
